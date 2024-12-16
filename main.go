@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/Kocherga38/rssagg/internal/database"
 	"github.com/go-chi/chi/v5"
@@ -36,9 +37,12 @@ func main() {
 		log.Fatal("Can't connect to database")
 	}
 
+	db := database.New(connection)
 	APICfg := APIConfig{
-		DB: database.New(connection),
+		DB: db,
 	}
+
+	go startScraping(db, 10, time.Minute)
 
 	router := chi.NewRouter()
 
