@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Kocherga38/rssagg/internal/database"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -44,4 +45,35 @@ func (APICfg *APIConfig) handlerCreateFeedFollow(writer http.ResponseWriter, req
 	}
 
 	respondWithJSON(writer, 201, databaseFeedFollowToFeedFollow(feedFollow))
+}
+
+func (APICfg *APIConfig) handlerGetFeedFollows(writer http.ResponseWriter, request *http.Request, user database.User) {
+	feedFollows, err := APICfg.DB.GetFeedFollow(request.Context(), user.ID)
+	if err != nil {
+		respondWithError(writer, 400, fmt.Sprintf("Couldn't get feed follows: %v", err))
+		return
+	}
+
+	respondWithJSON(writer, 201, databaseFeedFollowsToFeedFollows(feedFollows))
+}
+
+func (APICfg *APIConfig) handlerDeleeteFeedFollows(writer http.ResponseWriter, request *http.Request, user database.User) {
+	feedFollowIDStr := chi.URLParam(request, "feedFollowID")
+	feedFollowID, err := uuid.Parse(feedFollowIDStr)
+	if err != nil {
+		respondWithError(writer, 400, fmt.Sprintf("Couldn't parse feed follow id: %v", err))
+		return
+	}
+
+	err = APICfg.DB.DeleteFeedFollow(request.Context(), database.DeleteFeedFollowParams{
+		ID:     feedFollowID,
+		UserID: user.ID,
+	})
+
+	if err != nil {
+		respondWithError(writer, 400, fmt.Sprintf("Couldn't delete feed follow: %v", err))
+		return
+	}
+
+	respondWithJSON(writer, 200, struct{}{})
 }
